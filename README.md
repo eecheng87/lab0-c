@@ -25,6 +25,15 @@ Linux 18.04 or later:
 $ sudo apt install build-essential git clang-format cppcheck aspell colordiff valgrind
 ```
 
+Note: [Cppcheck](http://cppcheck.sourceforge.net/) version must be at least 1.90, otherwise
+it might report errors with false positives. You can get its version by executing `$ cppcheck --version`.
+Check [Developer Info](http://cppcheck.sourceforge.net/devinfo/) for building Cppcheck from source. Alternatively,
+you can make use of [snap](https://snapcraft.io/) for latest Cppcheck:
+```shell
+$ sudo snap install cppcheck
+$ export PATH=/snap/bin:$PATH
+```
+
 ## Running the autograders
 
 Before running the autograders, compile your code to create the testing program `qtest`
@@ -53,7 +62,7 @@ $ make valgrind
 
 Extra options can be recognized by make:
 * `VERBOSE`: control the build verbosity. If `VERBOSE=1`, echo eacho command in build process.
-* `SANITIER`: enable sanitizer(s) directed build. At the moment, AddressSanitizer is supported.
+* `SANITIZER`: enable sanitizer(s) directed build. At the moment, AddressSanitizer is supported.
 
 ## Using qtest
 
@@ -92,3 +101,7 @@ Trace files
 
 `lab0-c`is released under the BSD 2 clause license. Use of this source code is governed by
 a BSD-style license that can be found in the LICENSE file.
+
+External source code:
+* [dudect](https://github.com/oreparaz/dudect): public domain
+* [git-good-commit](https://github.com/tommarshall/git-good-commit): MIT License
