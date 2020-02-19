@@ -196,87 +196,191 @@ void q_reverse(queue_t *q)
  * No effect if q is NULL or empty. In addition, if q has only one
  * element, do nothing.
  */
-void q_sort(queue_t *q)
-/*
+#if 0
+void merge(list_ele_t *arr[], int l, int m, int r)
 {
-    if(!q || !q->head || q->size == 1)
-        return;
-    //list_ele_t *temp = q->head;
-    // tail indicates the tail of sorted list
-    list_ele_t *l_tail = q->tail;
+    int i, j, k;
+    int n1 = m - l + 1;
+    int n2 =  r - m;
 
-    int size = q->size;
-    list_ele_t *curr = q->head;
-    list_ele_t *prev = q->head;
-    list_ele_t *min_Prev = q->head;
-    list_ele_t *minNode = q->head;
-    for(int i = size; i > 0; i--) {
-        curr = q->head;
-        prev = q->head;
-        min_Prev = q->head;
-        minNode = q->head;
-        // find the min
-        for(int j = 0; j < i; j++) {
-            if(strcmp(curr->value,minNode->value) < 0) {
-                minNode = curr;
-                min_Prev = prev;
-            }
-            curr = curr->next;
-            if(j != 0) prev = prev->next;
+    /* create temp arrays */
+    list_ele_t *L[n1];
+    list_ele_t *R[n2];
+
+    /* Copy data to temp arrays L[] and R[] */
+    for (i = 0; i < n1; i++){
+        printf("== %d %d ==",n1,i);
+        L[i] = arr[l + i];
+    }
+    for (j = 0; j < n2; j++)
+        R[j] = arr[m + 1+ j];
+
+    /* Merge the temp arrays back into arr[l..r]*/
+    i = 0;
+    j = 0;
+    k = l;
+    while (i < n1 && j < n2)
+    {
+        if (strcmp(L[i]->value, R[j]->value) <= 0)
+        {
+            arr[k] = L[i];
+            i++;
         }
-        // printf("%s\n",minNode->value);
-        // let l_tail->next = min, because l_tail is last min.
-        if(minNode == q->head) {
-            l_tail->next = q->head;
-            q->head = q->head->next;
-            l_tail = l_tail->next;
-            l_tail->next = NULL;
-        }else{
-            l_tail->next = minNode;
-            min_Prev->next = minNode->next;
-            l_tail = l_tail->next;
-            minNode->next = NULL;
+        else
+        {
+            arr[k] = R[j];
+            j++;
         }
-        q->tail = l_tail;
+        k++;
     }
 
+    /* Copy the remaining elements of L[], if there are any */
+    while (i < n1)
+    {
+        arr[k] = L[i];
+        i++;
+        k++;
+    }
 
-}*/
+    /* Copy the remaining elements of R[], if there are any */
+    while (j < n2)
+    {
+        arr[k] = R[j];
+        j++;
+        k++;
+    }
+}
+int min(int x, int y) 
+{ 
+    return (x<y)? x :y; 
+}
+void q_sort(queue_t *q)
 {
     if (!q || !q->head || q->size == 1)
         return;
-    list_ele_t *temp;
 
-    // get size first
-    int size = q->size;
-    // curr is the next element of sorted list
-    list_ele_t *curr = q->head->next;
-    // prev->next == curr
-    list_ele_t *prev;
-    // tail indicates the tail of sorted list
-    list_ele_t *l_tail = q->head;
+    int curr_size;  // For current size of subarrays to be merged
+                   // curr_size varies from 1 to n/2
+    int left_start; // For picking starting index of left subarray
+                   // to be merged
+    int n = q->size;
+    list_ele_t *arr[n];
+    list_ele_t *tmp = q->head;
 
-    for (int i = 1; i < size; i++) {
-        temp = q->head;
-        prev = q->head;
-        // find the location to be inserted
-        for (int j = 0; j < i && strcmp(temp->value, curr->value) < 0; j++) {
-            temp = temp->next;
-            if (j != 0)
-                prev = prev->next;
-        }
-        // insert
-        if (temp == q->head) {
-            l_tail->next = curr->next;
-            curr->next = q->head;
-            q->head = curr;
-        } else if (temp == curr) {
-            l_tail = l_tail->next;
-        } else {
-            prev->next = curr;
-            l_tail->next = curr->next;
-            curr->next = temp;
-        }
-        curr = l_tail->next;
+    for(int i = 0; i < n && tmp != NULL; ++i){
+        arr[i] = tmp;
+        tmp = tmp->next;
     }
+
+    // Merge subarrays in bottom up manner.  First merge subarrays of
+    // size 1 to create sorted subarrays of size 2, then merge subarrays
+    // of size 2 to create sorted subarrays of size 4, and so on.
+    for (curr_size=1; curr_size<=n-1; curr_size = 2*curr_size)
+    {
+        // Pick starting point of different subarrays of current size
+        for (left_start=0; left_start<n-1; left_start += 2*curr_size)
+        {
+            // Find ending point of left subarray. mid+1 is starting 
+            // point of right
+            int mid = left_start + curr_size - 1;
+
+            int right_end = min(left_start + 2*curr_size - 1, n-1);
+
+            // Merge Subarrays arr[left_start...mid] & arr[mid+1...right_end]
+            merge(arr, left_start, mid, right_end);
+        }
+    }
+
+    tmp = q->head = arr[0];
+    q->tail = arr[n-1];
+    // tmp = arr[0];
+    for(int i = 1; i < n && tmp != NULL; ++i){
+        tmp->next = arr[i];
+        tmp = tmp->next;
+    }
+    q->tail->next = NULL;
+
+}
+#endif
+
+int min(int x, int y)
+{
+    return (x < y) ? x : y;
+}
+void q_sort(queue_t *q)
+{
+    if (!q || !q->head || q->size == 1)
+        return;
+    int block_size = 1, n = q->size, i, alen, blen;
+    list_ele_t virtual_head;
+    list_ele_t *last = NULL, *it = NULL, *l1 = NULL, *l2 = NULL, *tmp = NULL;
+    list_ele_t *l1head = NULL, *l1tail = NULL, *l2tail = NULL;
+    virtual_head.next = q->head;
+    while (block_size < n) {
+        int iter = 0;
+        last = &virtual_head;
+        it = virtual_head.next;
+        while (iter < n) {
+            // decide each iterate time's block size a and b
+            alen = min(n - iter, block_size);
+            // avoid odd block
+            blen = min(n - iter - alen, block_size);
+
+
+            l1 = it;
+            l1head = l1;
+            // if left block is odd, just skip
+            if (blen != 0) {
+                // seperate one list in to l1 and l2
+                for (i = 0; i < alen - 1; ++i)
+                    it = it->next;
+                l1tail = it;
+                l2 = it->next;
+                it->next = NULL;
+                it = l2;
+                for (i = 0; i < blen - 1; ++i)
+                    it = it->next;
+                l2tail = it;
+                tmp = it->next;
+                it->next = NULL;
+                it = tmp;
+            }
+
+            if (block_size > 10000000 && l1head && l2tail &&
+                strcmp(l1head->value, l2tail->value) == 0) {
+                iter += alen + blen;
+                last->next = l1;
+                l1tail->next = l2;
+                last = l2tail;
+                l2tail->next = NULL;
+            } else {
+                while (l1 || l2) {
+                    if (l2 == NULL ||
+                        (l1 != NULL && strcmp(l1->value, l2->value) < 0)) {
+                        // if l2 doesn't contain any node, just append l1 to
+                        // merge list or if value of l1 is smaller
+                        last->next = l1;
+                        last = last->next;
+                        l1 = l1->next;
+                    } else {
+                        // if l1 doesn't contain any node, just append l2 to
+                        // merge list or if value of l2 is smaller
+                        last->next = l2;
+                        last = last->next;
+                        l2 = l2->next;
+                    }
+                }
+                last->next = NULL;
+                iter += alen + blen;
+            }
+        }
+        block_size <<= 1;
+    }
+
+    q->head = virtual_head.next;
+    list_ele_t *nd = q->head;
+    while (nd->next) {
+        nd = nd->next;
+    }
+    q->tail = nd;
 }
