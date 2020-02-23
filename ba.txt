@@ -1,6 +1,0 @@
-new
-ih a
-ih c
-ih b
-ih d
-sort

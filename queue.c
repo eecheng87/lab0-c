@@ -196,112 +196,6 @@ void q_reverse(queue_t *q)
  * No effect if q is NULL or empty. In addition, if q has only one
  * element, do nothing.
  */
-#if 0
-void merge(list_ele_t *arr[], int l, int m, int r)
-{
-    int i, j, k;
-    int n1 = m - l + 1;
-    int n2 =  r - m;
-
-    /* create temp arrays */
-    list_ele_t *L[n1];
-    list_ele_t *R[n2];
-
-    /* Copy data to temp arrays L[] and R[] */
-    for (i = 0; i < n1; i++){
-        printf("== %d %d ==",n1,i);
-        L[i] = arr[l + i];
-    }
-    for (j = 0; j < n2; j++)
-        R[j] = arr[m + 1+ j];
-
-    /* Merge the temp arrays back into arr[l..r]*/
-    i = 0;
-    j = 0;
-    k = l;
-    while (i < n1 && j < n2)
-    {
-        if (strcmp(L[i]->value, R[j]->value) <= 0)
-        {
-            arr[k] = L[i];
-            i++;
-        }
-        else
-        {
-            arr[k] = R[j];
-            j++;
-        }
-        k++;
-    }
-
-    /* Copy the remaining elements of L[], if there are any */
-    while (i < n1)
-    {
-        arr[k] = L[i];
-        i++;
-        k++;
-    }
-
-    /* Copy the remaining elements of R[], if there are any */
-    while (j < n2)
-    {
-        arr[k] = R[j];
-        j++;
-        k++;
-    }
-}
-int min(int x, int y) 
-{ 
-    return (x<y)? x :y; 
-}
-void q_sort(queue_t *q)
-{
-    if (!q || !q->head || q->size == 1)
-        return;
-
-    int curr_size;  // For current size of subarrays to be merged
-                   // curr_size varies from 1 to n/2
-    int left_start; // For picking starting index of left subarray
-                   // to be merged
-    int n = q->size;
-    list_ele_t *arr[n];
-    list_ele_t *tmp = q->head;
-
-    for(int i = 0; i < n && tmp != NULL; ++i){
-        arr[i] = tmp;
-        tmp = tmp->next;
-    }
-
-    // Merge subarrays in bottom up manner.  First merge subarrays of
-    // size 1 to create sorted subarrays of size 2, then merge subarrays
-    // of size 2 to create sorted subarrays of size 4, and so on.
-    for (curr_size=1; curr_size<=n-1; curr_size = 2*curr_size)
-    {
-        // Pick starting point of different subarrays of current size
-        for (left_start=0; left_start<n-1; left_start += 2*curr_size)
-        {
-            // Find ending point of left subarray. mid+1 is starting 
-            // point of right
-            int mid = left_start + curr_size - 1;
-
-            int right_end = min(left_start + 2*curr_size - 1, n-1);
-
-            // Merge Subarrays arr[left_start...mid] & arr[mid+1...right_end]
-            merge(arr, left_start, mid, right_end);
-        }
-    }
-
-    tmp = q->head = arr[0];
-    q->tail = arr[n-1];
-    // tmp = arr[0];
-    for(int i = 1; i < n && tmp != NULL; ++i){
-        tmp->next = arr[i];
-        tmp = tmp->next;
-    }
-    q->tail->next = NULL;
-
-}
-#endif
 
 int min(int x, int y)
 {
@@ -314,7 +208,7 @@ void q_sort(queue_t *q)
     int block_size = 1, n = q->size, i, alen, blen;
     list_ele_t virtual_head;
     list_ele_t *last = NULL, *it = NULL, *l1 = NULL, *l2 = NULL, *tmp = NULL;
-    list_ele_t *l1head = NULL, *l1tail = NULL, *l2tail = NULL;
+    list_ele_t *l1head = NULL, *l1tail = NULL, *l2head = NULL, *l2tail = NULL;
     virtual_head.next = q->head;
     while (block_size < n) {
         int iter = 0;
@@ -325,38 +219,62 @@ void q_sort(queue_t *q)
             alen = min(n - iter, block_size);
             // avoid odd block
             blen = min(n - iter - alen, block_size);
-
+            // printf("%d %d block size: %d\n",alen,blen,block_size);
 
             l1 = it;
             l1head = l1;
             // if left block is odd, just skip
-            if (blen != 0) {
-                // seperate one list in to l1 and l2
+            if (alen == blen && alen > 1) {
+                // printf("hi");
+                list_ele_t *slow = l1head;
+                for (i = 0; i < alen - 1; ++i) {
+                    slow = slow->next;
+                    it = it->next->next;
+                }
+                it = it->next;
+                l1tail = slow;
+                l2 = l2head = slow->next;
+                slow->next = NULL;
+                l2tail = it;
+                tmp = it->next;
+                it->next = NULL;
+                it = tmp;
+            } else if (blen != 0) {
+                // seperate one list into l1 and l2
                 for (i = 0; i < alen - 1; ++i)
                     it = it->next;
                 l1tail = it;
-                l2 = it->next;
+                l2 = l2head = it->next;
                 it->next = NULL;
-                it = l2;
+                it = l2head;
                 for (i = 0; i < blen - 1; ++i)
                     it = it->next;
                 l2tail = it;
                 tmp = it->next;
                 it->next = NULL;
                 it = tmp;
+            } else {
+                l2 = l2head = l2tail = NULL;
+                l1tail = l1head;
+                while (l1tail->next) {
+                    l1tail = l1tail->next;
+                }
             }
 
-            if (block_size > 10000000 && l1head && l2tail &&
+            if (l1head && l2tail && l1tail && l2head &&
+                strcmp(l1head->value, l1tail->value) == 0 &&
+                strcmp(l1head->value, l2head->value) == 0 &&
                 strcmp(l1head->value, l2tail->value) == 0) {
+                // printf("%d\n",iter);
                 iter += alen + blen;
-                last->next = l1;
-                l1tail->next = l2;
+                last->next = l1head;
+                l1tail->next = l2head;
                 last = l2tail;
                 l2tail->next = NULL;
+                q->tail = l2tail;
             } else {
-                while (l1 || l2) {
-                    if (l2 == NULL ||
-                        (l1 != NULL && strcmp(l1->value, l2->value) < 0)) {
+                while (l1 && l2) {
+                    if (strcmp(l1->value, l2->value) <= 0) {
                         // if l2 doesn't contain any node, just append l1 to
                         // merge list or if value of l1 is smaller
                         last->next = l1;
@@ -370,7 +288,21 @@ void q_sort(queue_t *q)
                         l2 = l2->next;
                     }
                 }
-                last->next = NULL;
+                if (l1) {
+                    // printf("l1: %d\n",alen);
+                    last->next = l1;
+                    last = l1tail;
+                }
+                if (l2) {
+                    // printf("l2: %d\n",blen);
+                    last->next = l2;
+                    last = l2tail;
+                }
+                l2 = NULL;
+
+                if (last)
+                    last->next = NULL;
+                // q->tail = last;
                 iter += alen + blen;
             }
         }
@@ -380,6 +312,7 @@ void q_sort(queue_t *q)
     q->head = virtual_head.next;
     list_ele_t *nd = q->head;
     while (nd->next) {
+        // printf("%s->",nd->value);
         nd = nd->next;
     }
     q->tail = nd;

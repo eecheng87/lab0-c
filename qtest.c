@@ -11,6 +11,7 @@
 #include <sys/wait.h>
 #include <time.h>
 #include <unistd.h>
+#include "dudect/cpucycles.h"
 #include "dudect/fixture.h"
 
 /* Our program needs to use regular malloc/free */
@@ -548,8 +549,13 @@ bool do_sort(int argc, char *argv[])
     error_check();
 
     set_noallocate_mode(true);
+    // long hi = cpucycles();
+    // double a;
+    // init_time(&a);
     if (exception_setup(true))
         q_sort(q);
+    // printf("%ld\n",cpucycles()-hi);
+    // printf("%g\n",delta_time(&a));
     exception_cancel();
     set_noallocate_mode(false);
 
